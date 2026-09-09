@@ -20,7 +20,7 @@ interface FormProps<T extends FieldValues = FieldValues>
   form: UseFormReturn<T>;
 }
 
-const Form = React.forwardRef<HTMLFormElement, FormProps>(
+const Form = React.forwardRef<HTMLFormElement, FormProps<FieldValues>>(
   ({ form, className, children, ...props }, ref) => {
     return (
       <FormProvider {...form}>
@@ -30,7 +30,9 @@ const Form = React.forwardRef<HTMLFormElement, FormProps>(
       </FormProvider>
     );
   }
-);
+) as (<T extends FieldValues = FieldValues>(
+  props: FormProps<T> & React.RefAttributes<HTMLFormElement>
+) => React.ReactElement | null) & { displayName?: string };
 Form.displayName = "Form";
 
 // ----------------------------------------------
@@ -76,7 +78,7 @@ const useFormField = () => {
 
   const { getFieldState, formState } = formContext;
   const fieldState = getFieldState(fieldContext.name, formState);
-  const { id } = React.useId();
+  const id = React.useId();
 
   return {
     id,
