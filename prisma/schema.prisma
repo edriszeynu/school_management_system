@@ -1,0 +1,390 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------
+// ENUMS
+// ----------------------------------------------
+enum Role {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  ACCOUNTANT
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+  HOLIDAY
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum FeeStatus {
+  PAID
+  PARTIAL
+  UNPAID
+  OVERDUE
+  WAIVED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  ONLINE
+  CHEQUE
+}
+
+// ----------------------------------------------
+// CORE MODELS
+// ----------------------------------------------
+
+// 1. USERS & AUTHENTICATION
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String         // For NextAuth / bcrypt
+  name          String
+  role          Role
+  gender        Gender?
+  phone         String?
+  address       String?
+  avatar        String?        // Cloudinary/S3 URL
+  isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Relations (1:1 with role-specific profiles)
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+  parentStudents  ParentStudent[]
+  announcements  Announcement[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+// 2. ACADEMIC STRUCTURE
+model AcademicYear {
+  id          String   @id @default(cuid())
+  name        String   // e.g., "2026-2027"
+  startDate   DateTime
+  endDate     DateTime
+  isCurrent   Boolean  @default(false) // Only ONE year should be true
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  classes     Class[]
+  exams       Exam[]
+  feeStructures FeeStructure[]
+
+  @@unique([name])
+  @@map("academic_years")
+}
+
+model Class {
+  id              String          @id @default(cuid())
+  name            String          // e.g., "Grade 10"
+  section         String          // e.g., "A", "B" or "Science", "Arts"
+  academicYearId  String
+  roomNumber      String?
+  capacity        Int             @default(30)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  academicYear    AcademicYear    @relation(fields: [academicYearId], references: [id])
+  students        StudentProfile[]
+  classSubjects   ClassSubject[]
+  attendances     Attendance[]
+  exams           Exam[]
+  feeStructures   FeeStructure[]
+  announcements   Announcement[]
+
+  @@unique([name, section, academicYearId]) // No duplicate class/section in same year
+  @@map("classes")
+}
+
+model Subject {
+  id            String          @id @default(cuid())
+  name          String          // "Mathematics", "Physics"
+  code          String          @unique // "MATH101"
+  credits       Int             @default(1)
+  description   String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  // Relations
+  classSubjects ClassSubject[]
+
+  @@map("subjects")
+}
+
+// Junction: Which Subject is taught to which Class, and by which Teacher
+model ClassSubject {
+  id               String    @id @default(cuid())
+  classId          String
+  subjectId        String
+  teacherProfileId String    // The teacher responsible for this subject in this class
+
+  class            Class     @relation(fields: [classId], references: [id])
+  subject          Subject   @relation(fields: [subjectId], references: [id])
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+
+  timetable        Timetable[]
+  grades           Grade[]
+
+  @@unique([classId, subjectId])
+  @@map("class_subjects")
+}
+
+// 3. STUDENT & TEACHER PROFILES
+model StudentProfile {
+  id              String      @id @default(cuid())
+  userId          String      @unique
+  rollNumber      String?     // Unique per class, e.g., "01"
+  dateOfBirth     DateTime
+  enrollmentDate  DateTime    @default(now())
+  guardianName    String
+  guardianContact String
+  guardianEmail   String?
+  address         String?
+  medicalInfo     String?     // Allergies, conditions
+  classId         String      // Current class
+
+  // Relations
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  class           Class       @relation(fields: [classId], references: [id])
+  parentStudents  ParentStudent[]
+  attendances     Attendance[]
+  grades          Grade[]
+  invoices        Invoice[]
+  feeDiscounts    FeeDiscount[]
+
+  @@unique([rollNumber, classId])
+  @@map("student_profiles")
+}
+
+model TeacherProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  employeeId      String?   @unique // Staff ID
+  hireDate        DateTime  @default(now())
+  qualification   String?
+  specialization  String?
+  isClassTeacher  Boolean?  // If they are in charge of a specific class
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classSubjects   ClassSubject[]
+
+  @@map("teacher_profiles")
+}
+
+// 4. PARENT <-> STUDENT (Many-to-Many)
+model ParentStudent {
+  id          String   @id @default(cuid())
+  parentId    String
+  studentId   String
+  relation    String   // "Father", "Mother", "Guardian"
+
+  parent      User     @relation(fields: [parentId], references: [id])
+  student     StudentProfile @relation(fields: [studentId], references: [id])
+
+  @@unique([parentId, studentId])
+  @@map("parent_students")
+}
+
+// 5. TIMETABLE
+model Timetable {
+  id               String    @id @default(cuid())
+  dayOfWeek        String    // "MONDAY", "TUESDAY"...
+  period           Int       // 1, 2, 3...
+  classSubjectId   String
+  room             String?
+
+  classSubject     ClassSubject @relation(fields: [classSubjectId], references: [id])
+
+  @@unique([dayOfWeek, period, classSubjectId]) // Avoid teacher double-booking
+  @@map("timetables")
+}
+
+// 6. ATTENDANCE
+model Attendance {
+  id               String           @id @default(cuid())
+  studentId        String
+  classId          String
+  date             DateTime         @default(now())
+  status           AttendanceStatus
+  remarks          String?
+
+  student          StudentProfile   @relation(fields: [studentId], references: [id])
+  class            Class            @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId, date]) // One record per student, per class, per day
+  @@map("attendances")
+}
+
+// 7. EXAMS & GRADES
+model Exam {
+  id              String     @id @default(cuid())
+  title           String     // "Mid-Term", "Final", "Quiz 1"
+  academicYearId  String
+  classId         String?    // Specific to a class, or NULL if school-wide
+  startDate       DateTime
+  endDate         DateTime
+  maxScore        Float      // Default max score for all subjects (e.g., 100)
+  weightage       Float?     // % contribution to final grade (e.g., 40)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
+  class           Class?       @relation(fields: [classId], references: [id])
+  grades          Grade[]
+
+  @@map("exams")
+}
+
+model Grade {
+  id               String    @id @default(cuid())
+  studentId        String
+  classSubjectId   String
+  examId           String
+  score            Float
+  remarks          String?
+
+  // Relations
+  student          StudentProfile @relation(fields: [studentId], references: [id])
+  classSubject     ClassSubject   @relation(fields: [classSubjectId], references: [id])
+  exam             Exam           @relation(fields: [examId], references: [id])
+
+  @@unique([studentId, classSubjectId, examId]) // One grade per student per subject per exam
+  @@map("grades")
+}
+
+// 8. FEES & FINANCIALS
+model FeeStructure {
+  id              String      @id @default(cuid())
+  name            String      // "Tuition Fee", "Transport Fee"
+  academicYearId  String
+  classId         String      // Fees can vary by class
+  amount          Float
+  frequency       String      // "MONTHLY", "TERMLY", "ANNUAL"
+  dueDay          Int?        // Day of month due, e.g., 10
+  isMandatory     Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
+  class           Class        @relation(fields: [classId], references: [id])
+  invoices        Invoice[]    // Generated from this structure
+  discounts       FeeDiscount[]
+
+  @@map("fee_structures")
+}
+
+model Invoice {
+  id              String      @id @default(cuid())
+  invoiceNumber   String      @unique // e.g., INV-2026-001
+  studentId       String
+  feeStructureId  String
+  amount          Float
+  dueDate         DateTime
+  status          FeeStatus   @default(UNPAID)
+  issueDate       DateTime    @default(now())
+  paidDate        DateTime?
+  lateFee         Float?      @default(0)
+  description     String?
+
+  student         StudentProfile @relation(fields: [studentId], references: [id])
+  feeStructure    FeeStructure   @relation(fields: [feeStructureId], references: [id])
+  payments        Payment[]
+
+  @@map("invoices")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  invoiceId       String
+  amount          Float
+  method          PaymentMethod
+  transactionId   String?       // Gateway TXN ID
+  paymentDate     DateTime      @default(now())
+  receiptNumber   String?       @unique
+  notes           String?
+
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model FeeDiscount {
+  id              String       @id @default(cuid())
+  studentId       String
+  feeStructureId  String
+  discountPercent Float        // e.g., 10 for 10%
+  reason          String       // "Merit Scholarship", "Sibling Discount"
+  approvedBy      String?      // Admin ID
+  validFrom       DateTime     @default(now())
+  validUntil      DateTime?
+
+  student         StudentProfile @relation(fields: [studentId], references: [id])
+  feeStructure    FeeStructure   @relation(fields: [feeStructureId], references: [id])
+
+  @@unique([studentId, feeStructureId])
+  @@map("fee_discounts")
+}
+
+// 9. COMMUNICATIONS & ANNOUNCEMENTS
+model Announcement {
+  id              String      @id @default(cuid())
+  title           String
+  content         String
+  targetRole      Role?       // NULL = All, or specific role like STUDENT, PARENT
+  targetClassId   String?     // Specific class, or NULL for school-wide
+  authorId        String      // User who posted it
+  isImportant     Boolean     @default(false)
+  pinned          Boolean     @default(false)
+  expiresAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  author          User        @relation(fields: [authorId], references: [id])
+  class           Class?      @relation(fields: [targetClassId], references: [id])
+
+  @@map("announcements")
+}
+
+// 10. AUDIT LOGS (Security & Tracking)
+model AuditLog {
+  id              String      @id @default(cuid())
+  userId          String
+  action          String      // "CREATE", "UPDATE", "DELETE", "LOGIN"
+  entity          String      // "Student", "Invoice", "User"
+  entityId        String
+  changes         Json?       // Store old vs new values
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime    @default(now())
+
+  user            User        @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
