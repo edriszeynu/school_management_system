@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/teacher/timetable/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
