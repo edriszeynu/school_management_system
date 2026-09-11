@@ -23,7 +23,7 @@ interface FormProps<T extends FieldValues = FieldValues>
 const Form = React.forwardRef<HTMLFormElement, FormProps<FieldValues>>(
   ({ form, className, children, ...props }, ref) => {
     return (
-      <FormProvider {...form}>
+      <FormProvider {...(form as UseFormReturn<FieldValues>)}>
         <form ref={ref} className={cn("space-y-4", className)} {...props}>
           {children}
         </form>
