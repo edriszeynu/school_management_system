@@ -106,8 +106,7 @@ export default function NewTeacherForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form form={form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Form form={form} onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Personal Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Personal Information</h3>
@@ -321,7 +320,6 @@ export default function NewTeacherForm() {
                 )}
               </Button>
             </div>
-          </form>
         </Form>
       </CardContent>
     </Card>

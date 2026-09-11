@@ -3,8 +3,8 @@
 import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUpIcon, Users, UserCheck, BookOpen, DollarSign } from "lucide-react";
+import { CountUp } from "@/components/motion/count-up";
 
-// This is now a client component that receives stats as props
 interface SectionCardsProps {
   totalStudents: number;
   totalTeachers: number;
@@ -51,11 +51,11 @@ export function SectionCards({ totalStudents, totalTeachers, totalClasses, pendi
   return (
     <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
       {stats.map((stat) => (
-        <Card key={stat.title} className="@container/card">
+        <Card key={stat.title} className="@container/card transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
           <CardHeader>
             <CardDescription>{stat.title}</CardDescription>
             <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {stat.value}
+              <CountUp value={stat.value} />
             </CardTitle>
             <CardAction>
               <Badge variant="outline">

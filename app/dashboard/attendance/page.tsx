@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import { DashboardBackButton } from "@/components/dashboard-back-button";
 
 export default async function AttendancePage() {
   // Fetch attendance records with student and class details
@@ -42,6 +43,7 @@ export default async function AttendancePage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <DashboardBackButton />
           <h1 className="text-2xl font-bold tracking-tight">Attendance</h1>
           <p className="text-muted-foreground">View all attendance records</p>
         </div>

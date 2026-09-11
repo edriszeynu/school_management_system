@@ -41,6 +41,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 export type Student = {
   id: string;
@@ -54,6 +55,8 @@ export type Student = {
 
 interface DataTableProps {
   data: Student[];
+  detailsBasePath?: string;
+  detailsLabel?: string;
 }
 
 const dataTableFeatures = tableFeatures<TableFeatures>({
@@ -64,14 +67,14 @@ const dataTableFeatures = tableFeatures<TableFeatures>({
   rowSortingFeature,
 });
 
-export function DataTable({ data }: DataTableProps) {
+export function DataTable({ data, detailsBasePath, detailsLabel = "View Profile" }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
   const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 10 });
 
-  const columns = [
+  const columns: any[] = [
     {
       id: "select",
       header: ({ table }: any) => (
@@ -100,26 +103,26 @@ export function DataTable({ data }: DataTableProps) {
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }: any) => <div className="font-medium">{row.getValue("name")}</div>,
+      cell: ({ row }: any) => <div className="font-medium">{String(row.getValue("name"))}</div>,
       enableColumnFilter: true,
       filterFn: "includesString",
     },
     {
       accessorKey: "email",
       header: "Email",
-      cell: ({ row }: any) => <div>{row.getValue("email")}</div>,
+      cell: ({ row }: any) => <div>{String(row.getValue("email"))}</div>,
       enableColumnFilter: false,
     },
     {
       accessorKey: "className",
       header: "Class",
-      cell: ({ row }: any) => <div>{row.getValue("className")}</div>,
+      cell: ({ row }: any) => <div>{String(row.getValue("className"))}</div>,
       enableColumnFilter: false,
     },
     {
       accessorKey: "rollNumber",
       header: "Roll No.",
-      cell: ({ row }: any) => <div>{row.getValue("rollNumber") || "-"}</div>,
+      cell: ({ row }: any) => <div>{String(row.getValue("rollNumber") || "-")}</div>,
       enableColumnFilter: false,
     },
     {
@@ -127,7 +130,7 @@ export function DataTable({ data }: DataTableProps) {
       header: "Status",
       cell: ({ row }: any) => (
         <Badge variant={row.getValue("status") === "active" ? "default" : "secondary"}>
-          {row.getValue("status")}
+          {String(row.getValue("status"))}
         </Badge>
       ),
       enableColumnFilter: false,
@@ -135,7 +138,7 @@ export function DataTable({ data }: DataTableProps) {
     {
       accessorKey: "enrolledAt",
       header: "Enrolled",
-      cell: ({ row }: any) => <div>{new Date(row.getValue("enrolledAt")).toLocaleDateString()}</div>,
+      cell: ({ row }: any) => <div>{new Date(String(row.getValue("enrolledAt"))).toLocaleDateString()}</div>,
       enableColumnFilter: false,
     },
     {
@@ -143,7 +146,6 @@ export function DataTable({ data }: DataTableProps) {
       enableHiding: false,
       enableColumnFilter: false,
       cell: ({ row }: any) => {
-        const student = row.original;
         return (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -155,10 +157,18 @@ export function DataTable({ data }: DataTableProps) {
               }
             />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>View Profile</DropdownMenuItem>
-              <DropdownMenuItem>Edit Student</DropdownMenuItem>
-              <DropdownMenuItem>View Grades</DropdownMenuItem>
-              <DropdownMenuItem>View Attendance</DropdownMenuItem>
+              <DropdownMenuItem
+                render={<Link href={`/dashboard/students/${row.original.id}`}>View Profile</Link>}
+              />
+              <DropdownMenuItem
+                render={<Link href={`/dashboard/students/${row.original.id}/edit`}>Edit Student</Link>}
+              />
+              <DropdownMenuItem
+                render={<Link href={`/dashboard/students/${row.original.id}?tab=grades`}>View Grades</Link>}
+              />
+              <DropdownMenuItem
+                render={<Link href={`/dashboard/students/${row.original.id}?tab=attendance`}>View Attendance</Link>}
+              />
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -181,14 +191,19 @@ export function DataTable({ data }: DataTableProps) {
     onPaginationChange: setPagination, // ✅ control pagination manually
     state: { sorting, columnFilters, columnVisibility, rowSelection, pagination },
     enableColumnFilters: true,
-  });
+  } as any);
 
   const nameFilter = String(columnFilters.find((f) => f.id === "name")?.value ?? "");
   const selectedCount = Object.keys(rowSelection).length;
-  const totalFilteredRows = table.getFilteredRowModel().rows.length;
+  const filteredRows = table.getSortedRowModel().rows;
+  const totalFilteredRows = filteredRows.length;
   const pageCount = Math.max(1, Math.ceil(totalFilteredRows / pagination.pageSize));
   const canPrev = pagination.pageIndex > 0;
   const canNext = pagination.pageIndex < pageCount - 1;
+  const visibleRows = filteredRows.slice(
+    pagination.pageIndex * pagination.pageSize,
+    (pagination.pageIndex + 1) * pagination.pageSize
+  );
 
   return (
     <div className="w-full">
@@ -248,8 +263,8 @@ export function DataTable({ data }: DataTableProps) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => {
+            {visibleRows.length ? (
+              visibleRows.map((row) => {
                 const visibleCells = row.getAllCells().filter((cell) => cell.column.getIsVisible());
                 return (
                   <TableRow

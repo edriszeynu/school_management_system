@@ -1,5 +1,6 @@
 // app/(dashboard)/reports/page.tsx
 import { prisma } from "@/lib/prisma";
+import { DashboardBackButton } from "@/components/dashboard-back-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -175,6 +176,7 @@ export default async function ReportsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
+        <DashboardBackButton />
         <h1 className="text-2xl font-bold tracking-tight">Reports & Analytics</h1>
         <p className="text-muted-foreground">
           Overview of school performance metrics

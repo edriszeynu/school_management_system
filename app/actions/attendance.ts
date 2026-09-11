@@ -5,9 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { requireRole } from "@/lib/authorization";
 
 // Get students for a class with their current attendance for a given date
 export async function getStudentsForAttendance(classId: string, date: Date) {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
   const students = await prisma.studentProfile.findMany({
     where: { classId },
     include: {
@@ -56,6 +58,7 @@ const attendanceSchema = z.object({
 });
 
 export async function saveAttendance(data: z.infer<typeof attendanceSchema>) {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
   const validated = attendanceSchema.parse(data);
 
   // Use a transaction to handle multiple updates/creates

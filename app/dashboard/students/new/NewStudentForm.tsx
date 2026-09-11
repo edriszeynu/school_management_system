@@ -116,8 +116,7 @@ export default function NewStudentForm({ classes }: NewStudentFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form form={form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Form form={form} onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Personal Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Personal Information</h3>
@@ -170,19 +169,19 @@ export default function NewStudentForm({ classes }: NewStudentFormProps) {
                     <FormItem className="flex flex-col">
                       <FormLabel>Date of Birth *</FormLabel>
                       <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
+                        <PopoverTrigger
+                          render={
                             <Button
                               variant={"outline"}
                               className={cn(
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
-                            >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
+                            />
+                          }
+                        >
+                            {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
@@ -259,7 +258,7 @@ export default function NewStudentForm({ classes }: NewStudentFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Class *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a class" />
@@ -344,7 +343,6 @@ export default function NewStudentForm({ classes }: NewStudentFormProps) {
                 )}
               </Button>
             </div>
-          </form>
         </Form>
       </CardContent>
     </Card>

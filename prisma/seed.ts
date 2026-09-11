@@ -80,6 +80,13 @@ async function main() {
     { email: 'student3@gmail.com', password: 'Student@123', name: 'Charlie Brown' },
     { email: 'student4@gmail.com', password: 'Student@123', name: 'Diana Prince' },
     { email: 'student5@gmail.com', password: 'Student@123', name: 'Eve Adams' },
+    { email: 'student6@gmail.com', password: 'Student@123', name: 'Frank Miller' },
+    { email: 'student7@gmail.com', password: 'Student@123', name: 'Grace Hopper' },
+    { email: 'student8@gmail.com', password: 'Student@123', name: 'Henry Carter' },
+    { email: 'student9@gmail.com', password: 'Student@123', name: 'Ivy Morgan' },
+    { email: 'student10@gmail.com', password: 'Student@123', name: 'Jack Wilson' },
+    { email: 'student11@gmail.com', password: 'Student@123', name: 'Kate Davis' },
+    { email: 'student12@gmail.com', password: 'Student@123', name: 'Leo Martin' },
   ];
 
   const createdStudents: any[] = [];
@@ -234,7 +241,7 @@ async function main() {
   for (let i = 0; i < createdStudents.length; i++) {
     const student = createdStudents[i];
     const classId = i % 2 === 0 ? classA.id : classB.id;
-    const rollNumber = (i + 1).toString().padStart(2, '0');
+    const rollNumber = `S${(i + 1).toString().padStart(2, '0')}`;
     const studentProfile = await prisma.studentProfile.upsert({
       where: { userId: student.id },
       update: {},

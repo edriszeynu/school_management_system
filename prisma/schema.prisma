@@ -1,12 +1,15 @@
 // prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  output        = "../app/generated/prisma"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ----------------------------------------------
@@ -51,6 +54,27 @@ enum PaymentMethod {
   CHEQUE
 }
 
+// ✅ NEW ENUMS (for exams)
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  CLOSED
+}
+
+enum SubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
 // ----------------------------------------------
 // CORE MODELS
 // ----------------------------------------------
@@ -59,19 +83,18 @@ enum PaymentMethod {
 model User {
   id            String         @id @default(cuid())
   email         String         @unique
-  passwordHash  String         // For NextAuth / bcrypt
+  passwordHash  String
   name          String
   role          Role
   gender        Gender?
   phone         String?
   address       String?
-  avatar        String?        // Cloudinary/S3 URL
+  avatar        String?
   isActive      Boolean        @default(true)
   lastLoginAt   DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  // Relations (1:1 with role-specific profiles)
   studentProfile StudentProfile?
   teacherProfile TeacherProfile?
   parentStudents  ParentStudent[]
@@ -84,10 +107,10 @@ model User {
 // 2. ACADEMIC STRUCTURE
 model AcademicYear {
   id          String   @id @default(cuid())
-  name        String   // e.g., "2026-2027"
+  name        String
   startDate   DateTime
   endDate     DateTime
-  isCurrent   Boolean  @default(false) // Only ONE year should be true
+  isCurrent   Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -101,15 +124,14 @@ model AcademicYear {
 
 model Class {
   id              String          @id @default(cuid())
-  name            String          // e.g., "Grade 10"
-  section         String          // e.g., "A", "B" or "Science", "Arts"
+  name            String
+  section         String
   academicYearId  String
   roomNumber      String?
   capacity        Int             @default(30)
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  // Relations
   academicYear    AcademicYear    @relation(fields: [academicYearId], references: [id])
   students        StudentProfile[]
   classSubjects   ClassSubject[]
@@ -118,31 +140,29 @@ model Class {
   feeStructures   FeeStructure[]
   announcements   Announcement[]
 
-  @@unique([name, section, academicYearId]) // No duplicate class/section in same year
+  @@unique([name, section, academicYearId])
   @@map("classes")
 }
 
 model Subject {
   id            String          @id @default(cuid())
-  name          String          // "Mathematics", "Physics"
-  code          String          @unique // "MATH101"
+  name          String
+  code          String          @unique
   credits       Int             @default(1)
   description   String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  // Relations
   classSubjects ClassSubject[]
 
   @@map("subjects")
 }
 
-// Junction: Which Subject is taught to which Class, and by which Teacher
 model ClassSubject {
   id               String    @id @default(cuid())
   classId          String
   subjectId        String
-  teacherProfileId String    // The teacher responsible for this subject in this class
+  teacherProfileId String
 
   class            Class     @relation(fields: [classId], references: [id])
   subject          Subject   @relation(fields: [subjectId], references: [id])
@@ -159,17 +179,16 @@ model ClassSubject {
 model StudentProfile {
   id              String      @id @default(cuid())
   userId          String      @unique
-  rollNumber      String?     // Unique per class, e.g., "01"
+  rollNumber      String?
   dateOfBirth     DateTime
   enrollmentDate  DateTime    @default(now())
   guardianName    String
   guardianContact String
   guardianEmail   String?
   address         String?
-  medicalInfo     String?     // Allergies, conditions
-  classId         String      // Current class
+  medicalInfo     String?
+  classId         String
 
-  // Relations
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   class           Class       @relation(fields: [classId], references: [id])
   parentStudents  ParentStudent[]
@@ -178,6 +197,9 @@ model StudentProfile {
   invoices        Invoice[]
   feeDiscounts    FeeDiscount[]
 
+  // ✅ NEW: exam submissions relation
+  examSubmissions ExamSubmission[]
+
   @@unique([rollNumber, classId])
   @@map("student_profiles")
 }
@@ -185,25 +207,24 @@ model StudentProfile {
 model TeacherProfile {
   id              String    @id @default(cuid())
   userId          String    @unique
-  employeeId      String?   @unique // Staff ID
+  employeeId      String?   @unique
   hireDate        DateTime  @default(now())
   qualification   String?
   specialization  String?
-  isClassTeacher  Boolean?  // If they are in charge of a specific class
+  isClassTeacher  Boolean?
 
-  // Relations
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   classSubjects   ClassSubject[]
 
   @@map("teacher_profiles")
 }
 
-// 4. PARENT <-> STUDENT (Many-to-Many)
+// 4. PARENT <-> STUDENT
 model ParentStudent {
   id          String   @id @default(cuid())
   parentId    String
   studentId   String
-  relation    String   // "Father", "Mother", "Guardian"
+  relation    String
 
   parent      User     @relation(fields: [parentId], references: [id])
   student     StudentProfile @relation(fields: [studentId], references: [id])
@@ -215,14 +236,14 @@ model ParentStudent {
 // 5. TIMETABLE
 model Timetable {
   id               String    @id @default(cuid())
-  dayOfWeek        String    // "MONDAY", "TUESDAY"...
-  period           Int       // 1, 2, 3...
+  dayOfWeek        String
+  period           Int
   classSubjectId   String
   room             String?
 
   classSubject     ClassSubject @relation(fields: [classSubjectId], references: [id])
 
-  @@unique([dayOfWeek, period, classSubjectId]) // Avoid teacher double-booking
+  @@unique([dayOfWeek, period, classSubjectId])
   @@map("timetables")
 }
 
@@ -238,26 +259,35 @@ model Attendance {
   student          StudentProfile   @relation(fields: [studentId], references: [id])
   class            Class            @relation(fields: [classId], references: [id])
 
-  @@unique([studentId, classId, date]) // One record per student, per class, per day
+  @@unique([studentId, classId, date])
   @@map("attendances")
 }
 
 // 7. EXAMS & GRADES
 model Exam {
   id              String     @id @default(cuid())
-  title           String     // "Mid-Term", "Final", "Quiz 1"
+  title           String
   academicYearId  String
-  classId         String?    // Specific to a class, or NULL if school-wide
+  classId         String?
   startDate       DateTime
   endDate         DateTime
-  maxScore        Float      // Default max score for all subjects (e.g., 100)
-  weightage       Float?     // % contribution to final grade (e.g., 40)
+  maxScore        Float
+  weightage       Float?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+
+  // ✅ NEW fields for online exams
+  status          ExamStatus @default(DRAFT)
+  duration        Int?       // duration in minutes
+  instructions    String?
 
   academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
   class           Class?       @relation(fields: [classId], references: [id])
   grades          Grade[]
+
+  // ✅ NEW relations
+  questions       Question[]
+  submissions     ExamSubmission[]
 
   @@map("exams")
 }
@@ -270,31 +300,30 @@ model Grade {
   score            Float
   remarks          String?
 
-  // Relations
   student          StudentProfile @relation(fields: [studentId], references: [id])
   classSubject     ClassSubject   @relation(fields: [classSubjectId], references: [id])
   exam             Exam           @relation(fields: [examId], references: [id])
 
-  @@unique([studentId, classSubjectId, examId]) // One grade per student per subject per exam
+  @@unique([studentId, classSubjectId, examId])
   @@map("grades")
 }
 
 // 8. FEES & FINANCIALS
 model FeeStructure {
   id              String      @id @default(cuid())
-  name            String      // "Tuition Fee", "Transport Fee"
+  name            String
   academicYearId  String
-  classId         String      // Fees can vary by class
+  classId         String
   amount          Float
-  frequency       String      // "MONTHLY", "TERMLY", "ANNUAL"
-  dueDay          Int?        // Day of month due, e.g., 10
+  frequency       String
+  dueDay          Int?
   isMandatory     Boolean     @default(true)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
   academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
   class           Class        @relation(fields: [classId], references: [id])
-  invoices        Invoice[]    // Generated from this structure
+  invoices        Invoice[]
   discounts       FeeDiscount[]
 
   @@map("fee_structures")
@@ -302,7 +331,7 @@ model FeeStructure {
 
 model Invoice {
   id              String      @id @default(cuid())
-  invoiceNumber   String      @unique // e.g., INV-2026-001
+  invoiceNumber   String      @unique
   studentId       String
   feeStructureId  String
   amount          Float
@@ -325,7 +354,7 @@ model Payment {
   invoiceId       String
   amount          Float
   method          PaymentMethod
-  transactionId   String?       // Gateway TXN ID
+  transactionId   String?
   paymentDate     DateTime      @default(now())
   receiptNumber   String?       @unique
   notes           String?
@@ -339,9 +368,9 @@ model FeeDiscount {
   id              String       @id @default(cuid())
   studentId       String
   feeStructureId  String
-  discountPercent Float        // e.g., 10 for 10%
-  reason          String       // "Merit Scholarship", "Sibling Discount"
-  approvedBy      String?      // Admin ID
+  discountPercent Float
+  reason          String
+  approvedBy      String?
   validFrom       DateTime     @default(now())
   validUntil      DateTime?
 
@@ -357,9 +386,9 @@ model Announcement {
   id              String      @id @default(cuid())
   title           String
   content         String
-  targetRole      Role?       // NULL = All, or specific role like STUDENT, PARENT
-  targetClassId   String?     // Specific class, or NULL for school-wide
-  authorId        String      // User who posted it
+  targetRole      Role?
+  targetClassId   String?
+  authorId        String
   isImportant     Boolean     @default(false)
   pinned          Boolean     @default(false)
   expiresAt       DateTime?
@@ -372,14 +401,14 @@ model Announcement {
   @@map("announcements")
 }
 
-// 10. AUDIT LOGS (Security & Tracking)
+// 10. AUDIT LOGS
 model AuditLog {
   id              String      @id @default(cuid())
   userId          String
-  action          String      // "CREATE", "UPDATE", "DELETE", "LOGIN"
-  entity          String      // "Student", "Invoice", "User"
+  action          String
+  entity          String
   entityId        String
-  changes         Json?       // Store old vs new values
+  changes         Json?
   ipAddress       String?
   userAgent       String?
   createdAt       DateTime    @default(now())
@@ -387,4 +416,73 @@ model AuditLog {
   user            User        @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ----------------------------------------------
+// ✅ 11. ONLINE EXAM SYSTEM (NEW)
+// ----------------------------------------------
+
+model Question {
+  id             String       @id @default(cuid())
+  examId         String
+  type           QuestionType
+  questionText   String
+  points         Float        @default(1)
+  orderIndex     Int
+  correctAnswer  String?      // For TRUE_FALSE ("true"/"false"), SHORT_ANSWER (text); MCQ uses option.isCorrect
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  exam           Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  options        QuestionOption[]
+  answers        StudentAnswer[]
+
+  @@map("questions")
+}
+
+model QuestionOption {
+  id          String   @id @default(cuid())
+  questionId  String
+  text        String
+  isCorrect   Boolean  @default(false)
+  orderIndex  Int
+
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_options")
+}
+
+model ExamSubmission {
+  id            String           @id @default(cuid())
+  examId        String
+  studentId     String
+  status        SubmissionStatus @default(IN_PROGRESS)
+  startedAt     DateTime         @default(now())
+  submittedAt   DateTime?
+  totalScore    Float?
+  gradedAt      DateTime?
+
+  exam          Exam             @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student       StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers       StudentAnswer[]
+
+  @@unique([examId, studentId])
+  @@map("exam_submissions")
+}
+
+model StudentAnswer {
+  id                String    @id @default(cuid())
+  submissionId      String
+  questionId        String
+  answerText        String?   // For SHORT_ANSWER / ESSAY / TRUE_FALSE ("true" / "false")
+  selectedOptionId  String?   // For MULTIPLE_CHOICE
+  isCorrect         Boolean?
+  pointsEarned      Float?
+  gradedAt          DateTime?
+
+  submission        ExamSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question          Question       @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, questionId])
+  @@map("student_answers")
 }

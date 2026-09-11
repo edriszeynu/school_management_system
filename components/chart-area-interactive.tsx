@@ -24,17 +24,15 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState("30d");
 
-  React.useEffect(() => {
-    if (isMobile) setTimeRange("7d");
-  }, [isMobile]);
+  const selectedTimeRange = isMobile ? "7d" : timeRange;
 
   const filteredData = React.useMemo(() => {
-    const daysToSubtract = timeRange === "90d" ? 90 : timeRange === "30d" ? 30 : 7;
+    const daysToSubtract = selectedTimeRange === "90d" ? 90 : selectedTimeRange === "30d" ? 30 : 7;
     const referenceDate = new Date();
     const startDate = new Date(referenceDate);
     startDate.setDate(startDate.getDate() - daysToSubtract);
     return data.filter((item) => new Date(item.date) >= startDate);
-  }, [data, timeRange]);
+  }, [data, selectedTimeRange]);
 
   return (
     <Card className="@container/card">
@@ -47,7 +45,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
         <CardAction>
           <ToggleGroup
             multiple={false}
-            value={[timeRange]}
+            value={[selectedTimeRange]}
             onValueChange={(value) => setTimeRange(value[0] || "30d")}
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:px-4! @[767px]/card:flex"
@@ -56,7 +54,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
             <ToggleGroupItem value="30d">30 Days</ToggleGroupItem>
             <ToggleGroupItem value="7d">7 Days</ToggleGroupItem>
           </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
+          <Select value={selectedTimeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden" size="sm">
               <SelectValue placeholder="30 Days" />
             </SelectTrigger>

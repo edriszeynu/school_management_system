@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { requireRole } from "@/lib/authorization";
 
 // Validation schema
 const invoiceSchema = z.object({
@@ -21,6 +22,7 @@ const invoiceSchema = z.object({
 export type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
 export async function createInvoice(data: InvoiceFormValues) {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "ACCOUNTANT"]);
   // Validate
   const validated = invoiceSchema.parse(data);
 

@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { requireRole } from "@/lib/authorization";
 
 // Validation schema
 const teacherSchema = z.object({
@@ -24,6 +25,7 @@ const teacherSchema = z.object({
 export type TeacherFormValues = z.infer<typeof teacherSchema>;
 
 export async function createTeacher(data: TeacherFormValues) {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
   // Validate
   const validated = teacherSchema.parse(data);
 

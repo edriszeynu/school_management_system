@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import { DashboardBackButton } from "@/components/dashboard-back-button";
 
 export default async function TeachersPage() {
   // Fetch teachers with user info and class assignments
@@ -71,6 +72,7 @@ export default async function TeachersPage() {
       {/* Header with title and Add button */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <DashboardBackButton />
           <h1 className="text-2xl font-bold tracking-tight">Teachers</h1>
           <p className="text-muted-foreground">
             Manage all teachers in the school
@@ -91,7 +93,7 @@ export default async function TeachersPage() {
 
       {/* Table wrapped in a card */}
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
-        <DataTable data={tableData} />
+        <DataTable data={tableData} detailsBasePath="/dashboard/teachers" />
       </div>
     </div>
   );

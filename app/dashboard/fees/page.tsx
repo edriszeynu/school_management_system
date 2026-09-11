@@ -4,6 +4,7 @@ import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
+import { DashboardBackButton } from "@/components/dashboard-back-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function FeesPage() {
@@ -65,6 +66,7 @@ export default async function FeesPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <DashboardBackButton />
           <h1 className="text-2xl font-bold tracking-tight">Fees & Invoices</h1>
           <p className="text-muted-foreground">
             Manage all student invoices and payments
