@@ -54,7 +54,7 @@ export type Student = {
 };
 
 interface DataTableProps {
-  data: Student[];
+  data: any[];
   detailsBasePath?: string;
   detailsLabel?: string;
 }
