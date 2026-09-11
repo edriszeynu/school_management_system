@@ -20,7 +20,7 @@ export default async function UsersPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const tableData = users.map((u) => ({
+  const tableData = users.map((u: typeof users[number]) => ({
     id: u.id,
     name: u.name,
     email: u.email,

@@ -39,16 +39,15 @@ export default async function TeachersPage() {
   });
 
   // Shape data for the DataTable
-  const tableData = teachers.map((teacher) => {
-    // Get unique classes taught by this teacher
+  const tableData = teachers.map((teacher: typeof teachers[number]) => {
     const classes = teacher.classSubjects
-      .map((cs) => cs.class.name)
-      .filter((v, i, a) => a.indexOf(v) === i)
+      .map((cs: typeof teacher.classSubjects[number]) => cs.class.name)
+      .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i)
       .join(", ");
 
     const subjects = teacher.classSubjects
-      .map((cs) => cs.subject.name)
-      .filter((v, i, a) => a.indexOf(v) === i)
+      .map((cs: typeof teacher.classSubjects[number]) => cs.subject.name)
+      .filter((v: string, i: number, a: string[]) => a.indexOf(v) === i)
       .join(", ");
 
     return {
