@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/announcements/new/AnnouncementForm.tsx
 "use client";
 

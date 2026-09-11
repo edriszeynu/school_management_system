@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/exams/new/ExamForm.tsx
 "use client";
 

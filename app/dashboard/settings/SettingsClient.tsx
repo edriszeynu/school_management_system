@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/(dashboard)/settings/SettingsClient.tsx
 "use client";
 

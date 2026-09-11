@@ -35,7 +35,7 @@ export default async function StudentsPage() {
     email: student.user.email,
     className: student.class?.name || "N/A",
     rollNumber: student.rollNumber || "-",
-    status: student.user.isActive ? "active" : "inactive",
+    status: (student.user.isActive ? "active" : "inactive") as "active" | "inactive",
     enrolledAt: student.enrollmentDate.toISOString(),
   }));
 

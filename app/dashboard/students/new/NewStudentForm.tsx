@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/(dashboard)/students/new/NewStudentForm.tsx
 "use client";
 

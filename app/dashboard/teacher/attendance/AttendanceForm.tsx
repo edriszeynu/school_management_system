@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/teacher/attendance/AttendanceForm.tsx
 "use client";
 

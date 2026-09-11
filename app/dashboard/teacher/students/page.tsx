@@ -52,7 +52,7 @@ export default async function TeacherStudentsPage() {
     email: student.user.email,
     className: student.class?.name || "N/A",
     rollNumber: student.rollNumber || "-",
-    status: student.user.isActive ? "active" : ("inactive" as const),
+    status: (student.user.isActive ? "active" : "inactive") as "active" | "inactive",
     enrolledAt: student.enrollmentDate.toISOString(),
   }));
 

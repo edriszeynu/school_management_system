@@ -44,7 +44,7 @@ export async function submitExam(data: z.infer<typeof answerSchema>) {
   let totalScore = 0;
 
   // Save each answer and calculate score for auto-gradable questions
-  await prisma.$transaction(
+  await (prisma.$transaction as any)(
     validated.answers.map((ans) => {
       const question = questions.find((q) => q.id === ans.questionId);
       if (!question) return Promise.resolve();

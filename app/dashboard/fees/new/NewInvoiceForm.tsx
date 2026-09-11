@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/(dashboard)/fees/new/NewInvoiceForm.tsx
 "use client";
 

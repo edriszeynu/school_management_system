@@ -60,7 +60,7 @@ export default async function TeachersPage() {
       specialization: teacher.specialization || "-",
       classes: classes || "None",
       subjects: subjects || "None",
-      status: teacher.user.isActive ? "active" : "inactive",
+      status: (teacher.user.isActive ? "active" : "inactive") as "active" | "inactive",
       hireDate: teacher.hireDate.toISOString(),
       isClassTeacher: teacher.isClassTeacher ? "Yes" : "No",
     };
