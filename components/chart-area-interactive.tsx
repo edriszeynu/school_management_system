@@ -54,7 +54,7 @@ export function ChartAreaInteractive({ data }: ChartAreaInteractiveProps) {
             <ToggleGroupItem value="30d">30 Days</ToggleGroupItem>
             <ToggleGroupItem value="7d">7 Days</ToggleGroupItem>
           </ToggleGroup>
-          <Select value={selectedTimeRange} onValueChange={(v: string | null) => setTimeRange(v ?? "30d")}>
+          <Select value={selectedTimeRange} onValueChange={(v: string | null, _e: unknown) => setTimeRange(v ?? "30d")}>
             <SelectTrigger className="flex w-40 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate @[767px]/card:hidden" size="sm">
               <SelectValue placeholder="30 Days" />
             </SelectTrigger>
