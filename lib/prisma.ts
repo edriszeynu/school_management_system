@@ -1,5 +1,5 @@
 // lib/prisma.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/app/generated/prisma';
 
 function getDatabaseUrl() {
   const databaseUrl = process.env.DATABASE_URL;
