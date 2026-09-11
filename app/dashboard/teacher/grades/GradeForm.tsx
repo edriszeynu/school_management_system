@@ -1,7 +1,6 @@
 // @ts-nocheck
 // app/dashboard/teacher/grades/GradeForm.tsx
 "use client";
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +8,6 @@ import { z } from "zod";
 import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -59,7 +57,6 @@ import {
   saveGrades,
   deleteGrade,
 } from "@/app/actions/grade";
-
 type StudentRecord = {
   id: string;
   name: string;
@@ -68,21 +65,17 @@ type StudentRecord = {
   score: number | null;
   remarks: string;
 };
-
 type ClassSubjectOption = {
   id: string;
   label: string;
 };
-
 interface GradeFormProps {
   classSubjectOptions: ClassSubjectOption[];
 }
-
 const formSchema = z.object({
   classSubjectId: z.string().min(1, "Please select a class and subject"),
   examId: z.string().min(1, "Please select an exam"),
 });
-
 export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [examOptions, setExamOptions] = useState<{ id: string; label: string }[]>([]);
@@ -90,15 +83,12 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
   const [isLoadingExams, setIsLoadingExams] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { classSubjectId: "", examId: "" },
   });
-
   const watchClassSubjectId = form.watch("classSubjectId");
   const watchExamId = form.watch("examId");
-
   useEffect(() => {
     async function fetchExams() {
       if (!watchClassSubjectId) { setExamOptions([]); form.setValue("examId", ""); return; }
@@ -112,7 +102,6 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
     }
     fetchExams();
   }, [watchClassSubjectId, form]);
-
   useEffect(() => {
     async function fetchStudents() {
       if (!watchClassSubjectId || !watchExamId) { setStudents([]); return; }
@@ -125,17 +114,14 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
     }
     fetchStudents();
   }, [watchClassSubjectId, watchExamId]);
-
   const updateStudentScore = (studentId: string, score: string) => {
     setStudents((prev) =>
       prev.map((s) => s.id === studentId ? { ...s, score: score === "" ? null : parseFloat(score) } : s)
     );
   };
-
   const updateStudentRemarks = (studentId: string, remarks: string) => {
     setStudents((prev) => prev.map((s) => (s.id === studentId ? { ...s, remarks } : s)));
   };
-
   const handleDeleteGrade = async (studentId: string, gradeId: string) => {
     if (!gradeId) return;
     setIsDeleting(studentId);
@@ -149,7 +135,6 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
       toast.error(err.message || "Failed to delete grade.");
     } finally { setIsDeleting(null); }
   };
-
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     if (students.length === 0) { toast.error("No students to grade."); return; }
     setIsSaving(true);
@@ -164,7 +149,6 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
       toast.error(err.message || "Something went wrong. Please try again.");
     } finally { setIsSaving(false); }
   };
-
   return (
     <Card className="border-0 shadow-md">
       <CardHeader className="pb-4 border-b">
@@ -204,7 +188,6 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="examId"
@@ -234,7 +217,6 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
               )}
             />
           </div>
-
           {isLoadingStudents ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -340,7 +322,6 @@ export default function GradeForm({ classSubjectOptions }: GradeFormProps) {
               </p>
             </div>
           )}
-
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t">
             <Button type="button" variant="outline" asChild>
               <Link href="/dashboard/teacher">Cancel</Link>

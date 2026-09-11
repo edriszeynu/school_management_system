@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 import { DashboardBackButton } from "@/components/dashboard-back-button";
-
 export default async function StudentsPage() {
   // Fetch students with user and class info
   const students = await prisma.studentProfile.findMany({
@@ -28,7 +27,6 @@ export default async function StudentsPage() {
       enrollmentDate: "desc",
     },
   });
-
   // Shape data for the DataTable
   const tableData = students.map((student) => ({
     id: student.id,
@@ -39,7 +37,6 @@ export default async function StudentsPage() {
     status: (student.user.isActive ? "active" : "inactive") as "active" | "inactive",
     enrolledAt: student.enrollmentDate.toISOString(),
   }));
-
   return (
     <div className="space-y-6">
       {/* Header with title and Add button */}
@@ -58,12 +55,10 @@ export default async function StudentsPage() {
           </Link>
         </Button>
       </div>
-
       {/* Total count (optional) */}
       <p className="text-sm text-muted-foreground">
         Total: <span className="font-medium">{students.length}</span> students
       </p>
-
       {/* Table wrapped in a card */}
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
         <DataTable data={tableData} detailsBasePath="/dashboard/students" />

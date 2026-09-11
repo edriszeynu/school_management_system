@@ -9,11 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, CalendarCheck, BookOpen } from "lucide-react";
 import Link from "next/link";
-
 export default async function TeacherClassesPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
-
   const teacherProfile = await prisma.teacherProfile.findUnique({
     where: { userId: session.user.id },
     include: {
@@ -30,9 +28,7 @@ export default async function TeacherClassesPage() {
       },
     },
   });
-
   if (!teacherProfile) redirect("/dashboard/teacher");
-
   return (
     <div className="space-y-6">
       <div>
@@ -41,7 +37,6 @@ export default async function TeacherClassesPage() {
           All classes and subjects you are assigned to teach.
         </p>
       </div>
-
       {teacherProfile.classSubjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 rounded-lg border border-dashed">
           <BookOpen className="h-8 w-8 text-muted-foreground/50" />

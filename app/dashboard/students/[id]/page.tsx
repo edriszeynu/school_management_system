@@ -19,7 +19,6 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,7 +38,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-
 // Helper functions
 function getGradeColor(score: number): string {
   if (score >= 90) return "text-green-600 dark:text-green-400";
@@ -48,7 +46,6 @@ function getGradeColor(score: number): string {
   if (score >= 40) return "text-orange-600 dark:text-orange-400";
   return "text-red-600 dark:text-red-400";
 }
-
 function getGradeLetter(score: number): string {
   if (score >= 90) return "A";
   if (score >= 80) return "B";
@@ -56,7 +53,6 @@ function getGradeLetter(score: number): string {
   if (score >= 60) return "D";
   return "F";
 }
-
 export default async function StudentProfilePage({
   params,
   searchParams,
@@ -66,10 +62,8 @@ export default async function StudentProfilePage({
 }) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/login");
-
   const { id } = await params;
   const { tab } = await searchParams;
-
   // Fetch student with all relations
   const student = await prisma.studentProfile.findUnique({
     where: { id },
@@ -105,7 +99,6 @@ export default async function StudentProfilePage({
       },
     },
   });
-
   if (!student) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -119,24 +112,20 @@ export default async function StudentProfilePage({
       </div>
     );
   }
-
   // Attendance stats
   const totalDays = student.attendances.length;
   const presentDays = student.attendances.filter((a) => a.status === "PRESENT").length;
   const attendancePercentage = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-
   // Fee stats
   const unpaidInvoices = student.invoices.filter(
     (inv) => inv.status === "UNPAID" || inv.status === "OVERDUE"
   );
   const totalUnpaid = unpaidInvoices.reduce((sum, inv) => sum + inv.amount, 0);
-
   // Grade stats
   const gradeCount = student.grades.length;
   const averageGrade = gradeCount > 0
     ? Math.round(student.grades.reduce((sum, g) => sum + g.score, 0) / gradeCount * 10) / 10
     : null;
-
   return (
     <div className="space-y-6">
       {/* Header with back button */}
@@ -156,7 +145,6 @@ export default async function StudentProfilePage({
           {student.user.isActive ? "Active" : "Inactive"}
         </Badge>
       </div>
-
       {/* Quick Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card className="border-0 shadow-sm">
@@ -198,7 +186,6 @@ export default async function StudentProfilePage({
           </CardContent>
         </Card>
       </div>
-
       {/* Main content tabs */}
       <Tabs defaultValue={tab || "personal"} className="space-y-4">
         <TabsList>
@@ -207,7 +194,6 @@ export default async function StudentProfilePage({
           <TabsTrigger value="attendance">Attendance</TabsTrigger>
           <TabsTrigger value="fees">Fees</TabsTrigger>
         </TabsList>
-
         {/* Personal Info Tab */}
         <TabsContent value="personal" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -248,7 +234,6 @@ export default async function StudentProfilePage({
                 </div>
               </CardContent>
             </Card>
-
             <Card className="border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="text-lg">Guardian Information</CardTitle>
@@ -283,7 +268,6 @@ export default async function StudentProfilePage({
             </Card>
           </div>
         </TabsContent>
-
         {/* Grades Tab */}
         <TabsContent value="grades" className="space-y-4">
           <Card className="border-0 shadow-sm">
@@ -335,7 +319,6 @@ export default async function StudentProfilePage({
             </CardContent>
           </Card>
         </TabsContent>
-
         {/* Attendance Tab */}
         <TabsContent value="attendance" className="space-y-4">
           <Card className="border-0 shadow-sm">
@@ -375,7 +358,6 @@ export default async function StudentProfilePage({
             </CardContent>
           </Card>
         </TabsContent>
-
         {/* Fees Tab */}
         <TabsContent value="fees" className="space-y-4">
           <Card className="border-0 shadow-sm">
@@ -428,7 +410,6 @@ export default async function StudentProfilePage({
           </Card>
         </TabsContent>
       </Tabs>
-
       {/* Back to List */}
       <div className="flex justify-end">
         <Button variant="outline" asChild>

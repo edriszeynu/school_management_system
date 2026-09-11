@@ -34,11 +34,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CountUp } from "@/components/motion/count-up";
-
 export default async function TeacherDashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
-
   const teacherProfile = await prisma.teacherProfile.findUnique({
     where: { userId: session.user.id },
     include: {
@@ -55,7 +53,6 @@ export default async function TeacherDashboardPage() {
       },
     },
   });
-
   if (!teacherProfile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -64,13 +61,11 @@ export default async function TeacherDashboardPage() {
       </div>
     );
   }
-
   const today = new Date();
   const dayOfWeek = format(today, "EEEE").toUpperCase();
   const todayStart = startOfDay(today);
   const todayEnd = endOfDay(today);
   const classIds = teacherProfile.classSubjects.map((cs) => cs.classId);
-
   const [timetable, totalStudents, attendanceRecords, totalExams] = await Promise.all([
     prisma.timetable.findMany({
       where: { dayOfWeek, classSubject: { teacherProfileId: teacherProfile.id } },
@@ -84,11 +79,9 @@ export default async function TeacherDashboardPage() {
     }),
     prisma.exam.count({ where: { classId: { in: classIds } } }),
   ]);
-
   const presentCount = attendanceRecords.filter((a) => a.status === "PRESENT").length;
   const totalAttendance = attendanceRecords.length;
   const attendancePercentage = totalAttendance > 0 ? Math.round((presentCount / totalAttendance) * 100) : 0;
-
   const stats = [
     {
       title: "My Classes",
@@ -123,17 +116,14 @@ export default async function TeacherDashboardPage() {
       description: "Exams scheduled",
     },
   ];
-
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-
         {/* Header */}
         <div className="px-4 lg:px-6">
           <h1 className="text-2xl font-bold tracking-tight">Welcome back, {session.user.name}</h1>
           <p className="text-muted-foreground">Here's your teaching overview for today.</p>
         </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
           {stats.map((stat) => (
@@ -160,7 +150,6 @@ export default async function TeacherDashboardPage() {
             </Card>
           ))}
         </div>
-
         {/* Quick Actions */}
         <div className="px-4 lg:px-6">
           <div className="grid gap-4 md:grid-cols-3">
@@ -199,7 +188,6 @@ export default async function TeacherDashboardPage() {
             </Card>
           </div>
         </div>
-
         {/* Today's Schedule */}
         <div className="px-4 lg:px-6">
           <Card className="border-0 shadow-sm">
@@ -246,7 +234,6 @@ export default async function TeacherDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Your Classes */}
         <div className="px-4 lg:px-6">
           <Card className="border-0 shadow-sm">
@@ -283,7 +270,6 @@ export default async function TeacherDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
       </div>
     </div>
   );
