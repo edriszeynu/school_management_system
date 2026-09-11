@@ -2,6 +2,8 @@
 import { prisma } from "@/lib/prisma";
 import AnnouncementForm from "./AnnouncementForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewAnnouncementPage() {
   const classes = await prisma.class.findMany({
     select: { id: true, name: true, section: true },
