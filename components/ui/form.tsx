@@ -54,7 +54,8 @@ const FormField = <
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
 >({
   ...props
-}: ControllerProps<TFieldValues, TName>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+}: ControllerProps<TFieldValues, TName, any>) => {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
       <Controller {...props} />
