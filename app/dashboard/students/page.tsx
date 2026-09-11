@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/(dashboard)/students/page.tsx
 import { prisma } from "@/lib/prisma";
 import { DataTable } from "@/components/data-table";

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/students/[id]/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

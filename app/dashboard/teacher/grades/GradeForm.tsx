@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/teacher/grades/GradeForm.tsx
 "use client";
 

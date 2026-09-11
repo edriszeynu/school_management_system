@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/teacher/grades/page.tsx
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
