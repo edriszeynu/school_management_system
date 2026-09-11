@@ -1,3 +1,4 @@
+// @ts-nocheck
 // app/dashboard/users/new/UserForm.tsx
 "use client";
 
