@@ -17,7 +17,7 @@ import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, Lo
 export function NavUser({ user }: { user: { name: string; email: string; avatar?: string } }) {
   const { isMobile } = useSidebar();
 
-  const handleLogout = () => signOut({ callbackUrl: "/login" });
+  const handleLogout = () => signOut({ callbackUrl: `${window.location.origin}/login` });
 
   return (
     <div className="flex items-center gap-2 px-4 py-2">
