@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireRole } from "@/lib/authorization";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const examSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -18,23 +20,41 @@ const examSchema = z.object({
 });
 
 export async function createExam(data: z.infer<typeof examSchema>) {
-  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
+  const session = await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
   const validated = examSchema.parse(data);
-  await prisma.exam.create({ data: validated });
+  const exam = await prisma.exam.create({ data: validated });
   revalidatePath("/dashboard/exams");
+  revalidatePath("/dashboard/teacher");
+
+  // Redirect teacher to their exam questions page, admin to exam list
+  const s = await getServerSession(authOptions);
+  if (s?.user?.role === "TEACHER") {
+    redirect(`/dashboard/exams/${exam.id}/questions`);
+  }
   redirect("/dashboard/exams");
 }
 
 export async function updateExam(id: string, data: z.infer<typeof examSchema>) {
-  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
   const validated = examSchema.parse(data);
   await prisma.exam.update({ where: { id }, data: validated });
   revalidatePath("/dashboard/exams");
+
+  const s = await getServerSession(authOptions);
+  if (s?.user?.role === "TEACHER") {
+    redirect(`/dashboard/exams/${id}/questions`);
+  }
   redirect("/dashboard/exams");
 }
 
 export async function deleteExam(id: string) {
   await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
   await prisma.exam.delete({ where: { id } });
+  revalidatePath("/dashboard/exams");
+}
+
+export async function updateExamStatus(id: string, status: "DRAFT" | "PUBLISHED" | "ACTIVE" | "CLOSED") {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
+  await prisma.exam.update({ where: { id }, data: { status } });
   revalidatePath("/dashboard/exams");
 }
