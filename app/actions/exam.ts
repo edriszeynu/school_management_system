@@ -18,7 +18,7 @@ const examSchema = z.object({
 });
 
 export async function createExam(data: z.infer<typeof examSchema>) {
-  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN", "TEACHER"]);
   const validated = examSchema.parse(data);
   await prisma.exam.create({ data: validated });
   revalidatePath("/dashboard/exams");

@@ -57,6 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       { title: "Students",    url: "/dashboard/teacher/students",   icon: <UsersIcon /> },
       { title: "Attendance",  url: "/dashboard/teacher/attendance", icon: <CalendarCheckIcon /> },
       { title: "Grades",      url: "/dashboard/teacher/grades",     icon: <FileBarChartIcon /> },
+      { title: "Exams",       url: "/dashboard/exams/new",          icon: <BookOpenIcon /> },
       { title: "Timetable",   url: "/dashboard/teacher/timetable",  icon: <ClockIcon /> },
     ];
   } else if (role === "STUDENT") {

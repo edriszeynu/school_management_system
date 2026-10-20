@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
+
 import { useTheme } from "@/lib/theme-context";
+
 import { MoonIcon, SunIcon } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
