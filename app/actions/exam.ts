@@ -17,6 +17,8 @@ const examSchema = z.object({
   endDate: z.date(),
   maxScore: z.coerce.number().positive("Max score must be positive"),
   weightage: z.coerce.number().min(0).max(100).optional(),
+  duration: z.coerce.number().int().positive().optional(),
+  instructions: z.string().optional(),
 });
 
 export async function createExam(data: z.infer<typeof examSchema>) {

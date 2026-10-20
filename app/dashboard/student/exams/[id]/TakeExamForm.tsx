@@ -1,15 +1,13 @@
 // app/dashboard/student/exams/[id]/TakeExamForm.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Send, CheckCircle2, CircleDot, FileText, AlignLeft } from "lucide-react";
+import { Loader2, Send, CheckCircle2, CircleDot, FileText, AlignLeft, Clock, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { submitExam } from "@/app/actions/exam-submission";
 
@@ -26,6 +24,7 @@ interface Props {
     id: string;
     title: string;
     instructions: string | null;
+    duration: number | null;
     questions: Question[];
   };
   submissionId: string;
@@ -38,10 +37,54 @@ const typeConfig: Record<string, { label: string; icon: React.ElementType; color
   ESSAY:           { label: "Essay",           icon: AlignLeft,    color: "text-orange-500", bg: "bg-orange-500/10" },
 };
 
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function TakeExamForm({ exam, submissionId }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, { text: string | null; optionId: string | null }>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(
+    exam.duration ? exam.duration * 60 : null
+  );
+
+  const doSubmit = useCallback(async (auto = false) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await submitExam({
+        submissionId,
+        answers: exam.questions.map((q) => ({
+          questionId: q.id,
+          answerText: answers[q.id]?.text || null,
+          selectedOptionId: answers[q.id]?.optionId || null,
+        })),
+      });
+      if (auto) toast.warning("Time's up! Exam submitted automatically.");
+      else toast.success("Exam submitted successfully!");
+      router.push("/dashboard/student/exams");
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit");
+      setIsSubmitting(false);
+    }
+  }, [isSubmitting, submissionId, exam.questions, answers, router]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (timeLeft === null) return;
+    if (timeLeft <= 0) {
+      doSubmit(true);
+      return;
+    }
+    const interval = setInterval(() => {
+      setTimeLeft((t) => (t !== null ? t - 1 : null));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeLeft, doSubmit]);
 
   const setAnswer = (questionId: string, value: { text?: string | null; optionId?: string | null }) => {
     setAnswers((prev) => ({
@@ -62,23 +105,7 @@ export default function TakeExamForm({ exam, submissionId }: Props) {
     if (unanswered.length > 0) {
       if (!confirm(`You have ${unanswered.length} unanswered questions. Submit anyway?`)) return;
     }
-    setIsSubmitting(true);
-    try {
-      await submitExam({
-        submissionId,
-        answers: exam.questions.map((q) => ({
-          questionId: q.id,
-          answerText: answers[q.id]?.text || null,
-          selectedOptionId: answers[q.id]?.optionId || null,
-        })),
-      });
-      toast.success("Exam submitted successfully!");
-      router.push("/dashboard/student/exams");
-      router.refresh();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to submit");
-      setIsSubmitting(false);
-    }
+    doSubmit(false);
   };
 
   const totalPoints = exam.questions.reduce((s, q) => s + q.points, 0);
@@ -87,26 +114,35 @@ export default function TakeExamForm({ exam, submissionId }: Props) {
     return q.type === "MULTIPLE_CHOICE" ? !!a?.optionId : !!a?.text;
   }).length;
 
+  const isLowTime = timeLeft !== null && timeLeft <= 300; // last 5 min
+
   return (
     <div className="space-y-6 pb-10">
-
-      {/* Exam Header Card */}
+      {/* Exam Header */}
       <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
-        <div className="h-1.5 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
+        <div className="h-1.5 bg-linear-to-r from-primary/60 via-primary to-primary/60" />
         <div className="p-6">
-          <h1 className="text-2xl font-bold tracking-tight">{exam.title}</h1>
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-            <span className="text-sm text-muted-foreground">
-              {exam.questions.length} questions
-            </span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="text-sm text-muted-foreground">
-              {totalPoints} total points
-            </span>
-            <span className="text-muted-foreground/40">•</span>
-            <span className="text-sm font-medium text-primary">
-              {answeredCount}/{exam.questions.length} answered
-            </span>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">{exam.title}</h1>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <span className="text-sm text-muted-foreground">{exam.questions.length} questions</span>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="text-sm text-muted-foreground">{totalPoints} total points</span>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="text-sm font-medium text-primary">{answeredCount}/{exam.questions.length} answered</span>
+              </div>
+            </div>
+            {/* Timer */}
+            {timeLeft !== null && (
+              <div className={cn(
+                "flex items-center gap-2 rounded-xl border px-4 py-2 font-mono text-lg font-bold",
+                isLowTime ? "border-red-500/50 bg-red-500/10 text-red-500 animate-pulse" : "border-border bg-muted/30"
+              )}>
+                {isLowTime ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
+                {formatTime(timeLeft)}
+              </div>
+            )}
           </div>
 
           {/* Progress bar */}
@@ -130,60 +166,33 @@ export default function TakeExamForm({ exam, submissionId }: Props) {
       {exam.questions.map((q, idx) => {
         const config = typeConfig[q.type] || typeConfig.SHORT_ANSWER;
         const Icon = config.icon;
-        const isAnswered = q.type === "MULTIPLE_CHOICE"
-          ? !!answers[q.id]?.optionId
-          : !!answers[q.id]?.text;
+        const isAnswered = q.type === "MULTIPLE_CHOICE" ? !!answers[q.id]?.optionId : !!answers[q.id]?.text;
 
         return (
-          <div
-            key={q.id}
-            className={cn(
-              "rounded-2xl border bg-card shadow-sm overflow-hidden transition-all",
-              isAnswered && "border-primary/30"
-            )}
-          >
-            {/* Question header */}
+          <div key={q.id} className={cn("rounded-2xl border bg-card shadow-sm overflow-hidden transition-all", isAnswered && "border-primary/30")}>
             <div className="flex items-center justify-between gap-3 px-5 py-3.5 border-b bg-muted/30">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                  {idx + 1}
-                </div>
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{idx + 1}</div>
                 <div className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", config.bg)}>
                   <Icon className={cn("h-3 w-3", config.color)} />
                   <span className={config.color}>{config.label}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {isAnswered && (
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                )}
-                <span className="text-xs font-semibold text-muted-foreground">
-                  {q.points} pts
-                </span>
+                {isAnswered && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                <span className="text-xs font-semibold text-muted-foreground">{q.points} pts</span>
               </div>
             </div>
 
-            {/* Question body */}
             <div className="p-5 space-y-4">
               <p className="text-sm font-medium leading-relaxed">{q.questionText}</p>
 
               {q.type === "MULTIPLE_CHOICE" && (
-                <RadioGroup
-                  value={answers[q.id]?.optionId || ""}
-                  onValueChange={(val) => setAnswer(q.id, { optionId: val })}
-                  className="space-y-2"
-                >
+                <RadioGroup value={answers[q.id]?.optionId || ""} onValueChange={(val) => setAnswer(q.id, { optionId: val })} className="space-y-2">
                   {q.options.map((opt) => {
                     const selected = answers[q.id]?.optionId === opt.id;
                     return (
-                      <label
-                        key={opt.id}
-                        htmlFor={opt.id}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all hover:bg-muted/40",
-                          selected && "border-primary/50 bg-primary/5"
-                        )}
-                      >
+                      <label key={opt.id} htmlFor={opt.id} className={cn("flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all hover:bg-muted/40", selected && "border-primary/50 bg-primary/5")}>
                         <RadioGroupItem value={opt.id} id={opt.id} />
                         <span className="text-sm flex-1">{opt.text}</span>
                       </label>
@@ -193,22 +202,11 @@ export default function TakeExamForm({ exam, submissionId }: Props) {
               )}
 
               {q.type === "TRUE_FALSE" && (
-                <RadioGroup
-                  value={answers[q.id]?.text || ""}
-                  onValueChange={(val) => setAnswer(q.id, { text: val })}
-                  className="flex gap-3"
-                >
+                <RadioGroup value={answers[q.id]?.text || ""} onValueChange={(val) => setAnswer(q.id, { text: val })} className="flex gap-3">
                   {["true", "false"].map((val) => {
                     const selected = answers[q.id]?.text === val;
                     return (
-                      <label
-                        key={val}
-                        htmlFor={`${q.id}-${val}`}
-                        className={cn(
-                          "flex flex-1 items-center justify-center gap-2 rounded-xl border p-3 cursor-pointer transition-all hover:bg-muted/40",
-                          selected && "border-primary/50 bg-primary/5"
-                        )}
-                      >
+                      <label key={val} htmlFor={`${q.id}-${val}`} className={cn("flex flex-1 items-center justify-center gap-2 rounded-xl border p-3 cursor-pointer transition-all hover:bg-muted/40", selected && "border-primary/50 bg-primary/5")}>
                         <RadioGroupItem value={val} id={`${q.id}-${val}`} />
                         <span className="text-sm font-medium capitalize">{val}</span>
                       </label>
@@ -218,39 +216,22 @@ export default function TakeExamForm({ exam, submissionId }: Props) {
               )}
 
               {q.type === "SHORT_ANSWER" && (
-                <Textarea
-                  value={answers[q.id]?.text || ""}
-                  onChange={(e) => setAnswer(q.id, { text: e.target.value })}
-                  placeholder="Type your answer..."
-                  rows={2}
-                  className="resize-none text-sm"
-                />
+                <Textarea value={answers[q.id]?.text || ""} onChange={(e) => setAnswer(q.id, { text: e.target.value })} placeholder="Type your answer..." rows={2} className="resize-none text-sm" />
               )}
 
               {q.type === "ESSAY" && (
-                <Textarea
-                  value={answers[q.id]?.text || ""}
-                  onChange={(e) => setAnswer(q.id, { text: e.target.value })}
-                  placeholder="Write your answer..."
-                  rows={6}
-                  className="resize-none text-sm"
-                />
+                <Textarea value={answers[q.id]?.text || ""} onChange={(e) => setAnswer(q.id, { text: e.target.value })} placeholder="Write your answer..." rows={6} className="resize-none text-sm" />
               )}
             </div>
           </div>
         );
       })}
 
-      {/* Footer Actions */}
+      {/* Footer */}
       <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm">
-        <Button variant="ghost" onClick={() => router.push("/dashboard/student/exams")} className="text-muted-foreground">
-          ← Cancel
-        </Button>
+        <Button variant="ghost" onClick={() => router.push("/dashboard/student/exams")} className="text-muted-foreground">← Cancel</Button>
         <Button onClick={handleSubmit} disabled={isSubmitting} size="lg" className="min-w-36">
-          {isSubmitting
-            ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
-            : <><Send className="mr-2 h-4 w-4" />Submit Exam</>
-          }
+          {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</> : <><Send className="mr-2 h-4 w-4" />Submit Exam</>}
         </Button>
       </div>
     </div>

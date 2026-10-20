@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PlusIcon, PencilIcon, ListIcon } from "lucide-react";
+import { PlusIcon, PencilIcon, ListIcon, Trophy } from "lucide-react";
 import { DashboardBackButton } from "@/components/dashboard-back-button";
 import { format } from "date-fns";
 import {
@@ -80,6 +80,12 @@ export default async function ExamsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link href={`/dashboard/exams/${exam.id}/results`}>
+                            <Trophy className="h-3.5 w-3.5 mr-1" />
+                            Results
+                          </Link>
+                        </Button>
                         <Button variant="ghost" size="sm" asChild>
                           <Link href={`/dashboard/exams/${exam.id}/questions`}>
                             <ListIcon className="h-3.5 w-3.5 mr-1" />

@@ -49,6 +49,7 @@ export default async function TakeExamPage({
         id: exam.id,
         title: exam.title,
         instructions: exam.instructions,
+        duration: exam.duration,
         questions: exam.questions.map((q) => ({
           id: q.id,
           type: q.type,
