@@ -57,7 +57,13 @@ interface DataTableProps {
   data: any[];
   detailsBasePath?: string;
   detailsLabel?: string;
+  showEditAction?: boolean;
 }
+
+type DataTableAction = {
+  label: string;
+  href: string;
+};
 
 const dataTableFeatures = tableFeatures<TableFeatures>({
   columnFilteringFeature,
@@ -67,7 +73,7 @@ const dataTableFeatures = tableFeatures<TableFeatures>({
   rowSortingFeature,
 });
 
-export function DataTable({ data, detailsBasePath, detailsLabel = "View Profile" }: DataTableProps) {
+export function DataTable({ data, detailsBasePath, detailsLabel = "View Profile", showEditAction = true }: DataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>({});
@@ -146,6 +152,16 @@ export function DataTable({ data, detailsBasePath, detailsLabel = "View Profile"
       enableHiding: false,
       enableColumnFilter: false,
       cell: ({ row }: any) => {
+        const studentPath = detailsBasePath || "/dashboard/students";
+        const actions: DataTableAction[] = row.original.actions || [
+          { label: detailsLabel, href: `${studentPath}/${row.original.id}` },
+          ...(showEditAction
+            ? [{ label: "Edit Student", href: `${studentPath}/${row.original.id}/edit` }]
+            : []),
+          { label: "View Grades", href: `${studentPath}/${row.original.id}?tab=grades` },
+          { label: "View Attendance", href: `${studentPath}/${row.original.id}?tab=attendance` },
+        ];
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -157,18 +173,12 @@ export function DataTable({ data, detailsBasePath, detailsLabel = "View Profile"
               }
             />
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                render={<Link href={`/dashboard/students/${row.original.id}`}>View Profile</Link>}
-              />
-              <DropdownMenuItem
-                render={<Link href={`/dashboard/students/${row.original.id}/edit`}>Edit Student</Link>}
-              />
-              <DropdownMenuItem
-                render={<Link href={`/dashboard/students/${row.original.id}?tab=grades`}>View Grades</Link>}
-              />
-              <DropdownMenuItem
-                render={<Link href={`/dashboard/students/${row.original.id}?tab=attendance`}>View Attendance</Link>}
-              />
+              {actions.map((action) => (
+                <DropdownMenuItem
+                  key={`${action.label}-${action.href}`}
+                  render={<Link href={action.href}>{action.label}</Link>}
+                />
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         );

@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createClass } from "@/app/actions/class";
+import { createClass, updateClass } from "@/app/actions/class";
 
 // Form validation schema
 const formSchema = z.object({
@@ -52,9 +52,17 @@ type AcademicYear = {
 
 interface NewClassFormProps {
   academicYears: AcademicYear[];
+  classRecord?: {
+    id: string;
+    name: string;
+    section: string;
+    academicYearId: string;
+    roomNumber: string | null;
+    capacity: number;
+  };
 }
 
-export default function NewClassForm({ academicYears }: NewClassFormProps) {
+export default function NewClassForm({ academicYears, classRecord }: NewClassFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,11 +70,11 @@ export default function NewClassForm({ academicYears }: NewClassFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      section: "",
-      academicYearId: "",
-      roomNumber: "",
-      capacity: 30,
+      name: classRecord?.name || "",
+      section: classRecord?.section || "",
+      academicYearId: classRecord?.academicYearId || "",
+      roomNumber: classRecord?.roomNumber || "",
+      capacity: classRecord?.capacity || 30,
     },
   });
 
@@ -74,8 +82,12 @@ export default function NewClassForm({ academicYears }: NewClassFormProps) {
     setIsLoading(true);
     setError(null);
     try {
-      await createClass(data);
-      // Redirect happens in server action
+      if (classRecord) {
+        await updateClass(classRecord.id, data);
+        router.push("/dashboard/classes");
+      } else {
+        await createClass(data);
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
       setIsLoading(false);
@@ -85,7 +97,7 @@ export default function NewClassForm({ academicYears }: NewClassFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Add New Class</CardTitle>
+        <CardTitle className="text-2xl">{classRecord ? "Edit Class" : "Add New Class"}</CardTitle>
         <CardDescription>
           Fill in the class details below. All fields marked with * are required.
         </CardDescription>
@@ -194,10 +206,10 @@ export default function NewClassForm({ academicYears }: NewClassFormProps) {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {classRecord ? "Saving..." : "Creating..."}
                   </>
                 ) : (
-                  "Create Class"
+                  classRecord ? "Save Changes" : "Create Class"
                 )}
               </Button>
             </div>

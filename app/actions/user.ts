@@ -2,7 +2,6 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { requireRole } from "@/lib/authorization";
 
@@ -66,7 +65,6 @@ export async function createUser(data: UserFormData) {
   });
 
   revalidatePath("/dashboard/users");
-  redirect("/dashboard/users");
 }
 
 export async function updateUser(id: string, data: UpdateUserFormData) {
@@ -91,5 +89,4 @@ export async function updateUser(id: string, data: UpdateUserFormData) {
   });
 
   revalidatePath("/dashboard/users");
-  redirect("/dashboard/users");
 }

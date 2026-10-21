@@ -101,18 +101,14 @@ export default async function TeacherExamsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/exams/${exam.id}/questions`}>
-                            <ListIcon className="h-3.5 w-3.5 mr-1" />
-                            Questions
-                          </Link>
-                        </Button>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/dashboard/exams/${exam.id}/edit`}>
-                            <PencilIcon className="h-3.5 w-3.5 mr-1" />
-                            Edit
-                          </Link>
-                        </Button>
+                        <Link href={`/dashboard/exams/${exam.id}/questions`} className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                          <ListIcon className="h-3.5 w-3.5" />
+                          Questions
+                        </Link>
+                        <Link href={`/dashboard/exams/${exam.id}/edit`} className="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                          <PencilIcon className="h-3.5 w-3.5" />
+                          Edit
+                        </Link>
                       </div>
                     </TableCell>
                   </TableRow>

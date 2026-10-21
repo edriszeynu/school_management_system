@@ -24,6 +24,10 @@ export default async function ClassesPage() {
     capacity: cls.capacity,
     students: cls._count.students,
     createdAt: cls.createdAt.toISOString(),
+    actions: [
+      { label: "View Students", href: `/dashboard/students?classId=${cls.id}` },
+      { label: "Edit Class", href: `/dashboard/classes/${cls.id}/edit` },
+    ],
   }));
 
   return (

@@ -43,13 +43,13 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { createTeacher } from "@/app/actions/teacher";
+import { createTeacher, updateTeacher } from "@/app/actions/teacher";
 
 // Form validation schema (matches server action)
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().refine((value) => value === "" || value.length >= 6, "Password must be at least 6 characters"),
   phone: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
   employeeId: z.string().optional(),
@@ -61,7 +61,22 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function NewTeacherForm() {
+interface TeacherFormRecord {
+  id: string;
+  employeeId: string | null;
+  hireDate: Date;
+  qualification: string | null;
+  specialization: string | null;
+  isClassTeacher: boolean;
+  user: {
+    name: string;
+    email: string;
+    phone: string | null;
+    gender: "MALE" | "FEMALE" | "OTHER" | null;
+  };
+}
+
+export default function NewTeacherForm({ teacher }: { teacher?: TeacherFormRecord }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,16 +84,16 @@ export default function NewTeacherForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: teacher?.user.name || "",
+      email: teacher?.user.email || "",
       password: "",
-      phone: "",
-      gender: undefined,
-      employeeId: "",
-      hireDate: new Date(),
-      qualification: "",
-      specialization: "",
-      isClassTeacher: false,
+      phone: teacher?.user.phone || "",
+      gender: teacher?.user.gender || undefined,
+      employeeId: teacher?.employeeId || "",
+      hireDate: teacher?.hireDate || new Date(),
+      qualification: teacher?.qualification || "",
+      specialization: teacher?.specialization || "",
+      isClassTeacher: teacher?.isClassTeacher || false,
     },
   });
 
@@ -91,8 +106,18 @@ export default function NewTeacherForm() {
         hireDate: data.hireDate.toISOString(),
         isClassTeacher: data.isClassTeacher || false,
       };
-      await createTeacher(payload);
-      // Redirect happens in server action
+      if (teacher) {
+        await updateTeacher(teacher.id, payload);
+        router.push(`/dashboard/teachers/${teacher.id}`);
+        router.refresh();
+      } else {
+        if (data.password.length < 6) {
+          form.setError("password", { message: "Password must be at least 6 characters" });
+          setIsLoading(false);
+          return;
+        }
+        await createTeacher(payload);
+      }
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
       setIsLoading(false);
@@ -102,7 +127,7 @@ export default function NewTeacherForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Add New Teacher</CardTitle>
+        <CardTitle className="text-2xl">{teacher ? "Edit Teacher" : "Add New Teacher"}</CardTitle>
         <CardDescription>
           Fill in the teacher details below. All fields marked with * are required.
         </CardDescription>
@@ -146,7 +171,7 @@ export default function NewTeacherForm() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password *</FormLabel>
+                      <FormLabel>{teacher ? "New Password (leave blank to keep current)" : "Password *"}</FormLabel>
                       <FormControl>
                         <Input type="password" placeholder="••••••••" {...field} />
                       </FormControl>
@@ -315,10 +340,10 @@ export default function NewTeacherForm() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {teacher ? "Saving..." : "Creating..."}
                   </>
                 ) : (
-                  "Create Teacher"
+                  teacher ? "Save Changes" : "Create Teacher"
                 )}
               </Button>
             </div>

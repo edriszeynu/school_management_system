@@ -37,3 +37,21 @@ export async function createClass(data: ClassFormValues) {
   revalidatePath("/dashboard/classes");
   redirect("/dashboard/classes");
 }
+
+export async function updateClass(id: string, data: ClassFormValues) {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
+  const validated = classSchema.parse(data);
+
+  await prisma.class.update({
+    where: { id },
+    data: {
+      name: validated.name,
+      section: validated.section,
+      academicYearId: validated.academicYearId,
+      roomNumber: validated.roomNumber,
+      capacity: validated.capacity,
+    },
+  });
+
+  revalidatePath("/dashboard/classes");
+}

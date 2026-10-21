@@ -39,7 +39,7 @@ import { createUser, updateUser } from "@/app/actions/user";
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters").or(z.literal("")),
   role: z.enum(["SUPER_ADMIN", "SCHOOL_ADMIN", "ACCOUNTANT", "TEACHER", "STUDENT", "PARENT"]),
   phone: z.string().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
@@ -68,6 +68,11 @@ export default function UserForm({ user }: UserFormProps) {
   });
 
   const onSubmit = async (data: FormValues) => {
+    if (!user && data.password.length < 6) {
+      form.setError("password", { message: "Password must be at least 6 characters" });
+      return;
+    }
+
     setIsLoading(true);
     try {
       if (user) {

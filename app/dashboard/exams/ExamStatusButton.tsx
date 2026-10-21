@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,8 +50,10 @@ export function ExamStatusButton({ examId, currentStatus }: { examId: string; cu
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-7 gap-1 px-2" disabled={loading}>
+      <DropdownMenuTrigger
+        className="inline-flex h-7 items-center justify-center gap-1 rounded-md px-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+        disabled={loading}
+      >
           {loading ? (
             <Loader2 className="h-3 w-3 animate-spin" />
           ) : (
@@ -61,7 +62,6 @@ export function ExamStatusButton({ examId, currentStatus }: { examId: string; cu
               <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </>
           )}
-        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {allStatuses.map((s) => (

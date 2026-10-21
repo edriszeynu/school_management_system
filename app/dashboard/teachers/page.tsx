@@ -52,6 +52,7 @@ export default async function TeachersPage() {
 
     return {
       id: teacher.id,
+      userId: teacher.userId,
       name: teacher.user.name,
       email: teacher.user.email,
       phone: teacher.user.phone || "-",
@@ -63,6 +64,10 @@ export default async function TeachersPage() {
       status: (teacher.user.isActive ? "active" : "inactive") as "active" | "inactive",
       hireDate: teacher.hireDate.toISOString(),
       isClassTeacher: teacher.isClassTeacher ? "Yes" : "No",
+      actions: [
+        { label: "View Profile", href: `/dashboard/teachers/${teacher.id}` },
+        { label: "Edit Teacher", href: `/dashboard/teachers/${teacher.id}/edit` },
+      ],
     };
   });
 

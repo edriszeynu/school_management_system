@@ -49,6 +49,14 @@ export default withAuth(
     }
 
     const userRole = token.role as string;
+    const isTeacherExamRoute =
+      userRole === "TEACHER" &&
+      (path === "/dashboard/exams/new" ||
+        /^\/dashboard\/exams\/[^/]+\/(questions|edit)$/.test(path));
+
+    if (isTeacherExamRoute) {
+      return NextResponse.next();
+    }
 
     // Find the matching permission rule (longest prefix match)
     const matchingPrefix = Object.keys(rolePermissions)

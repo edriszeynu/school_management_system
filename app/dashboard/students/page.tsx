@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { PlusIcon } from "lucide-react";
 import { DashboardBackButton } from "@/components/dashboard-back-button";
-export default async function StudentsPage() {
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ classId?: string }>;
+}) {
+  const { classId } = await searchParams;
   // Fetch students with user and class info
   const students = await prisma.studentProfile.findMany({
+    where: classId ? { classId } : undefined,
     include: {
       user: {
         select: {
@@ -45,7 +51,7 @@ export default async function StudentsPage() {
           <DashboardBackButton />
           <h1 className="text-2xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">
-            Manage all students in the school
+            {classId ? "Students in the selected class" : "Manage all students in the school"}
           </p>
         </div>
         <Button asChild>

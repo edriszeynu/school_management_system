@@ -66,7 +66,7 @@ export default async function TeacherStudentsPage() {
         </p>
       </div>
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-        <DataTable data={tableData} detailsBasePath="/dashboard/students" />
+        <DataTable data={tableData} detailsBasePath="/dashboard/students" showEditAction={false} />
       </div>
     </div>
   );

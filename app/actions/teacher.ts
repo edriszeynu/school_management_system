@@ -57,3 +57,43 @@ export async function createTeacher(data: TeacherFormValues) {
   revalidatePath("/dashboard/teachers");
   redirect("/dashboard/teachers");
 }
+
+export async function updateTeacher(id: string, data: Omit<TeacherFormValues, "password"> & { password?: string }) {
+  await requireRole(["SUPER_ADMIN", "SCHOOL_ADMIN"]);
+  const validated = z.object({
+    ...teacherSchema.shape,
+    password: z.string().optional(),
+  }).parse({ ...data, password: data.password || "" });
+
+  const teacher = await prisma.teacherProfile.findUnique({
+    where: { id },
+    select: { userId: true },
+  });
+  if (!teacher) throw new Error("Teacher not found");
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.user.update({
+      where: { id: teacher.userId },
+      data: {
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        gender: validated.gender,
+        ...(validated.password ? { passwordHash: await bcrypt.hash(validated.password, 10) } : {}),
+      },
+    });
+    await transaction.teacherProfile.update({
+      where: { id },
+      data: {
+        employeeId: validated.employeeId,
+        hireDate: validated.hireDate,
+        qualification: validated.qualification,
+        specialization: validated.specialization,
+        isClassTeacher: validated.isClassTeacher,
+      },
+    });
+  });
+
+  revalidatePath("/dashboard/teachers");
+  revalidatePath(`/dashboard/teachers/${id}`);
+}

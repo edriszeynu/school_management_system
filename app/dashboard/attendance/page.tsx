@@ -33,10 +33,19 @@ export default async function AttendancePage() {
   const tableData = attendance.map((record) => ({
     id: record.id,
     studentName: record.student.user.name,
+    studentId: record.studentId,
+    classId: record.classId,
     className: record.class?.name || "N/A",
     date: record.date.toISOString(),
     status: record.status,
     remarks: record.remarks || "-",
+    actions: [
+      { label: "View Student", href: `/dashboard/students/${record.studentId}` },
+      {
+        label: "Edit Attendance",
+        href: `/dashboard/attendance/mark?classId=${record.classId}&date=${encodeURIComponent(record.date.toISOString())}`,
+      },
+    ],
   }));
 
   return (

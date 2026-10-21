@@ -28,6 +28,9 @@ export default async function UsersPage() {
     status: u.isActive ? "Active" : "Inactive",
     createdAt: u.createdAt.toISOString(),
     hasProfile: !!(u.studentProfile || u.teacherProfile),
+    actions: [
+      { label: "Edit User", href: `/dashboard/users/${u.id}/edit` },
+    ],
   }));
 
   return (
