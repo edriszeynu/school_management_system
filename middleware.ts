@@ -42,10 +42,14 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    if (path === "/login") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
     // If user is not logged in, the `authorized` callback will redirect to login.
     // But we also check here for extra safety.
     if (!token) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(new URL("/", req.url));
     }
 
     const userRole = token.role as string;
@@ -80,12 +84,12 @@ export default withAuth(
       authorized: ({ token }) => !!token, // Must be logged in
     },
     pages: {
-      signIn: "/login",
+      signIn: "/",
     },
   }
 );
 
 // Protect all routes under /dashboard (including sub‑routes)
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/login"],
 };
